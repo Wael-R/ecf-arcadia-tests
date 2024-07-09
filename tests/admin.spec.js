@@ -1,17 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { goToConnectionPage } = require("../common");
-const { adminLogin, password } = require("../testData.json");
-
-const connectAsAdmin = async (page) => {
-  await goToConnectionPage(page);
-
-  await page.getByLabel("Adresse Email").fill(adminLogin);
-  await page.getByLabel("Mot de passe").fill(password);
-
-  await page.getByRole("button", { name: "Connexion" }).click();
-
-  await page.waitForURL("**/admin/index.php");
-};
+const { connectAsAdmin } = require("../common");
 
 test("can update opening hours", async ({ page }) => {
   await connectAsAdmin(page);
@@ -87,7 +75,7 @@ test("can create and delete services", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Supprimer", exact: true }).click();
 
-  await page.getByText("Service supprimé avec succès").click();
+  await expect(page.getByText("Service supprimé avec succès")).toBeVisible();
 });
 
 test("can add and delete habitat", async ({ page }) => {
@@ -113,7 +101,7 @@ test("can add and delete habitat", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Supprimer", exact: true }).click();
 
-  await page.getByText("Habitat supprimé avec succès").click();
+  await expect(page.getByText("Habitat supprimé avec succès")).toBeVisible();
 });
 
 test("check vet comments regarding habitats", async ({ page }) => {
@@ -157,21 +145,48 @@ test("check vet comments regarding animals", async ({ page }) => {
 test("can add and delete animal", async ({ page }) => {
   await connectAsAdmin(page);
 
+  // Create animal
   await page
     .getByRole("heading", { name: "Modifier les animaux" })
     .scrollIntoViewIfNeeded();
 
-  await page.getByLabel("Nom de l'animal").fill("Lionnelle");
+  await page.getByLabel("Nom de l'animal").fill("Lion");
   await page.getByLabel("Race de l'animal").fill("Lion");
 
   await page.getByRole("button", { name: "Créer un nouvel animal" }).click();
 
-  await expect(page.getByText("Animal crée avec succès")).toBeVisible();
+  await expect(
+    page
+      .locator("#animalMessage")
+      .filter({ hasText: "Animal crée avec succès" })
+  ).toBeVisible();
+
+  // Assign to habitat
+  await page
+    .getByLabel("Animaux à modifier ou créer")
+    .selectOption("(Savane) Lion");
+  await page.getByRole("button", { name: "Affecter à un habitat" }).click();
+  await expect(
+    page.locator(".modal").getByText("Affecter à un habitat")
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".modal")
+      .getByText("Choisissez un habitat au quel affecter cet animal:")
+  ).toBeVisible();
+
+  await page.locator(".modal #animalHabitatSelect").selectOption("Jungle");
+
+  await page
+    .locator(".modal")
+    .getByRole("button", { name: "Affecter", exact: true })
+    .click();
+  await expect(page.getByText("Animal affecté a l'habitat")).toBeVisible();
 
   // Delete animal
   await page
     .getByLabel("Animaux à modifier ou créer")
-    .selectOption("(Auccun habitat)Lionnelle");
+    .selectOption("(Jungle) Lion");
   await page.getByRole("button", { name: "Supprimer l'animal" }).click();
 
   await expect(
@@ -179,69 +194,19 @@ test("can add and delete animal", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Supprimer", exact: true }).click();
 
-  await page.getByText("Animal supprimé avec succès").click();
+  await expect(
+    page
+      .locator("#animalMessage")
+      .filter({ hasText: "Animal supprimé avec succès" })
+  ).toBeVisible();
 });
 
-test.skip("rest", async ({ page }) => {
+test("can check popular animals", async ({ page }) => {
+  await connectAsAdmin(page);
+
+  // popular animals
   await page
-    .getByRole("heading", { name: "Commentaires du vétérinaire" })
-    .click();
-  await page.getByText("Habitat", { exact: true }).click();
-  await page.getByLabel("Habitat", { exact: true }).selectOption("1");
-  await page.getByText("Habitat selectionné uniquement").click();
-  await page
-    .getByText(
-      "Pour Savane, soumis le 6 juillet 2024 à 01:09Avis:Commentaire..."
-    )
-    .click();
-  await page.getByText("Pour Savane, soumis le 6").click();
-  await page.getByText("Avis:Commentaire...").click();
-  await page.getByRole("heading", { name: "Modifier les animaux" }).click();
-  await page.getByText("Animaux à modifier ou créer").click();
-  await page.getByLabel("Nom de l'animal").click();
-  await page.getByLabel("Nom de l'animal").fill("Lion");
-  await page.getByLabel("Race de l'animal").click();
-  await page
-    .locator("#animalForm div")
-    .filter({ hasText: "Nom de l'animal" })
-    .click();
-  await page.getByLabel("Nom de l'animal").click();
-  await page.getByLabel("Nom de l'animal").fill("Lionnel");
-  await page.getByLabel("Race de l'animal").click();
-  await page.getByLabel("Race de l'animal").fill("Lion");
-  await page.getByText("Race de l'animal").click();
-  await page.getByText("Image(s) de l'animal").click();
-  await page
-    .getByText("Veuillez selectionner un animal pour modifier ses images")
-    .click();
-  await page
-    .locator("#animalForm div")
-    .filter({ hasText: "Affecter à un habitat" })
-    .click();
-  await page
-    .locator("#animalForm div")
-    .filter({ hasText: "Supprimer l'animal" })
-    .click();
-  await page.getByRole("button", { name: "Créer un nouvel animal" }).click();
-  await page.getByText("Animal crée avec succès").click();
-  await page.getByLabel("Animaux à modifier ou créer").selectOption("22");
-  await page.getByRole("button", { name: "Affecter à un habitat" }).click();
-  await page.getByRole("heading", { name: "Affecter à un habitat" }).click();
-  await page.getByText("Choisissez un habitat au quel").click();
-  await page.getByText("Choisissez un habitat au quel").click();
-  await page.getByText("Annuler Affecter").click();
-  await page.getByRole("button", { name: "Affecter", exact: true }).click();
-  await page.getByText("Animal affecté a l'habitat").click();
-  await page
-    .getByRole("heading", { name: "Avis passés du vétérinaire" })
-    .click();
-  await page.getByText("Animal", { exact: true }).click();
-  await page.getByLabel("Animal", { exact: true }).selectOption("1");
-  await page.getByText("Aucun résultats").click();
-  await page.getByText("Animal selectionné uniquement").click();
-  await page.getByText("Date de début :").click();
-  await page.getByRole("button", { name: "1 juillet 2024 à 15:" }).click();
-  await page.getByText("Date de fin :").click();
-  await page.getByRole("button", { name: "8 juillet 2024 à 15:" }).click();
-  await page.getByRole("heading", { name: "Animaux populaires" }).click();
+    .getByRole("heading", { name: "Animaux populaires" })
+    .scrollIntoViewIfNeeded();
+  await expect(page.locator("#animalStatsContainer")).toBeAttached();
 });

@@ -64,8 +64,8 @@ describe("Habitats Page - Zoo Arcadia", () => {
     //should display correct animal card details
     const animals = [
       {
-        title: "Nouvel animal 1",
-        alt: "Image de Nouvel animal 1",
+        title: "Beebo",
+        alt: "Image de Beebo",
         health: "Bonne santé",
       },
       {

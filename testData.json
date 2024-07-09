@@ -1,4 +1,6 @@
 {
     "adminLogin": "admin@arcadia",
+    "employeeLogin": "test@employee",
+    "vetLogin": "test@veterinarian",
     "password": "123451"
 }

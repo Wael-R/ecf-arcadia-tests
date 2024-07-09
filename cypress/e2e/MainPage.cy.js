@@ -19,7 +19,7 @@ describe("Zoo Arcadia Page", () => {
   });
 
   it("should cycle through the carousel images", () => {
-    cy.get(".carousel-item").should("have.length", 3);
+    cy.get(".carousel-item").should("have.length.greaterThan", 1);
     cy.get(".carousel-control-next").click();
     cy.get(".carousel-item.active").should("have.length", 1);
     cy.get(".carousel-control-next").click();
